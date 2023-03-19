@@ -1,54 +1,29 @@
 #include "Valu4.h"
-#include "nvboard.h"
-#include "verilated.h"
-#include "verilated_vcd_c.h"
+#include <iostream>
+#include <verilated.h>
 
-#define TOP Valu4
+int main(int argc, char **argv) {
+  Verilated::commandArgs(argc, argv);
+  Valu4 *top = new Valu4;
 
-VerilatedContext *contextp = NULL;
-VerilatedVcdC *tfp = NULL;
-
-static TOP *top;
-
-void sim_init() {
-  contextp = new VerilatedContext;
-  top = new TOP;
-}
-
-void sim_end() {
-  delete contextp;
-  delete top;
-}
-
-int main() {
-  sim_init();
-  int n = 100000;
-  while (n--) {
-    top->eval();
-  }
-
-  for (int i = -8; i <= 7; i++) {
-    for (int j = -8; j <= 7; j++) {
-      sim_init();
-      top->opt = 0b110;
-      top->a = i;
-      top->b = j;
-      int n = 100000;
-      while (n--) {
-        top->eval();
-      }
-      int result;
-      if (i < j) {
-        result = 1;
+  for (int a = -8; a <= 7; ++a) {
+    for (int b = -8; b <= 7; ++b) {
+      top->a = a;
+      top->b = b;
+      top->opt = 6;
+      top->eval();
+      int expected_output = (a < b) ? 1 : 0;
+      if (top->y != expected_output) {
+        std::cerr << "Error: a = " << a << ", b = " << b
+                  << ", opt = 110, output should be " << expected_output
+                  << ", but get result " << top->y << std::endl;
       } else {
-        result = 0;
+        std::cout << "ok!" << std::endl;
       }
-      if (top->y != result) {
-        printf("a: %d, b: %d, should be %d, got %d\n", i, j, result, top->y);
-      } else {
-        printf("a: %d, b: %d, got %d, OK!\n", i, j, result);
-      }
-      sim_end();
     }
   }
+
+  top->final();
+  delete top;
+  return 0;
 }
